@@ -50,15 +50,18 @@ class ControlReceiver(Receiver):
 
 class InterruptReceiver(Receiver):
     def handler(self, msg_type, data):
-        logger.info("Got interrupt msg %x %s", msg_type, data)
         if msg_type & 0xf0 == 0xa0:
             if msg_type & 0x0f != 0x02:
                 logger.info("Invalid DATA msg: subtype != Output")
                 return
-            logger.info("Output: %s", data)
             if data[0] == 0x01:
                 # Report ID 0x01: keyboard
                 self.hid_device.keyboard.led(data[1])
+            else:
+                logger.info("Output: %s", data)
+        else:
+            logger.info("Got interrupt msg %x %s", msg_type, data)
+
 
 class BluetoothHID(object):
     def __init__(self, data_dir):
