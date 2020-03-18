@@ -153,3 +153,20 @@ class BluetoothKeyboard(object):
 
         logger.info("Sending %r", message)
         self.interrupt_client.send(message)
+
+    def send_mouse_click(self, buttons):
+        self.send_mouse_state(0, 0, buttons, 0)
+        time.sleep(0.1)
+        self.send_mouse_state(0, 0, 0, 0)
+
+    def send_mouse_move(self, dx=0, dy=0, buttons=0):
+        self.send_mouse_state(dx, dy, buttons)
+
+    def send_wheel(self, dv=0, dh=0):
+        self.send_mouse_state(0, 0, 0, dv, dh)
+
+    def send_mouse_state(self, dx=0, dy=0, buttons=0, dv=0, dh=0):
+        message = bytes([0xa1, 0x03, buttons & 0xff, (buttons & 0xff00) >> 8,
+                         dx & 0xff, (dx & 0xff00) >> 8, dy & 0xff, (dy & 0xff00) >> 8,
+                         dv & 0xff, dh & 0xff])
+        self.interrupt_client.send(message)

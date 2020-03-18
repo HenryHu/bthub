@@ -54,6 +54,13 @@ class App(object):
                     logger.error("Arg missing")
                     continue
                 self.keyboard.send_key(0, int(args))
+            if cmd == 'click':
+                self.keyboard.send_mouse_click(int(args))
+            if cmd == 'move':
+                (arg1, arg2) = args.split(' ')
+                self.keyboard.send_mouse_move(int(arg1), int(arg2))
+            if cmd == 'wheel':
+                self.keyboard.send_wheel(int(args))
             if cmd == 'quit':
                 self.mainloop.quit()
                 break
