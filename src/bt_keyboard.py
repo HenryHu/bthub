@@ -63,4 +63,11 @@ class BluetoothKeyboard(object):
             self.modifier_up(modifier)
 
     def led(self, led):
-        logger.info("LED: %x", led)
+        leds = []
+        if led & 0x1:
+            leds.append('NUM')
+        if led & 0x2:
+            leds.append('CAPS')
+        if led & 0x4:
+            leds.append('SCROLL')
+        logger.info("LED: %x", ' '.join(leds))
