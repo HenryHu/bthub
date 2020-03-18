@@ -98,11 +98,11 @@
     </attribute>
     <!-- HID virtual cable -->
     <attribute id="0x0204">
-        <boolean value="false" />
+        <boolean value="true" />
     </attribute>
     <!-- HID Reconnect initiate -->
     <attribute id="0x0205">
-        <boolean value="false" />
+        <boolean value="true" />
     </attribute>
     <!-- HID descriptor list -->
     <attribute id="0x0206">
