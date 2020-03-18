@@ -112,7 +112,7 @@ class BluetoothHID(object):
         self.interrupt_sock.listen(1)
 
     def accept(self):
-        logging.info("Accepting for connections")
+        logger.info("Accepting for connections")
 
         if self.control_client is not None:
             logger.error("Already accepted")
