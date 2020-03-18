@@ -37,6 +37,7 @@ class App(object):
         self.console_thread.start()
 
     def console_handler(self):
+        self.hid_device.accept()
         while True:
             user_input = input("bt > ")
             if ' ' in user_input:
