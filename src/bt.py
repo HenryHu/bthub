@@ -46,26 +46,33 @@ class App(object):
                 cmd = user_input
                 args = None
 
-            if cmd == 'accept':
-                self.hid_device.accept()
-            if cmd == 'close':
-                self.hid_device.close()
-            if cmd == 'key':
-                if args is None:
-                    logger.error("Arg missing")
-                    continue
-                self.hid_device.keyboard.key(None, int(args))
-            if cmd == 'click':
-                self.hid_device.mouse.click(int(args))
-            if cmd == 'move':
-                (arg1, arg2) = args.split(' ')
-                self.hid_device.mouse.move(int(arg1), int(arg2))
-            if cmd == 'wheel':
-                (arg1, arg2) = args.split(' ')
-                self.hid_device.mouse.wheel(int(args1), int(arg2))
-            if cmd == 'quit':
-                self.mainloop.quit()
-                break
+            try:
+                if cmd == 'accept':
+                    self.hid_device.accept()
+                if cmd == 'close':
+                    self.hid_device.close()
+                if cmd == 'key':
+                    if args is None:
+                        logger.error("Arg missing")
+                        continue
+                    self.hid_device.keyboard.key(None, int(args))
+                if cmd == 'click':
+                    self.hid_device.mouse.click(int(args))
+                if cmd == 'move':
+                    (arg1, arg2) = args.split(' ')
+                    self.hid_device.mouse.move(int(arg1), int(arg2))
+                if cmd == 'wheel':
+                    if ' ' in args:
+                        (arg1, arg2) = args.split(' ')
+                    else:
+                        arg1 = args
+                        arg2 = 0
+                    self.hid_device.mouse.wheel(int(arg1), int(arg2))
+                if cmd == 'quit':
+                    self.mainloop.quit()
+                    sys.exit(0)
+            except Exception as e:
+                logger.exception(e)
 
 
 if __name__ == "__main__":
