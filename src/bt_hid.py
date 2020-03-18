@@ -20,7 +20,8 @@ SDP_RECORD_FILENAME = "sdp_record.xml"
 HID_SERVICE_UUID = "00001124-0000-1000-8000-00805f9b34fb"
 
 class Receiver(object):
-    def __init__(self, client_sock, close_callback=None):
+    def __init__(self, hid_device, client_sock, close_callback=None):
+        self.hid_device = hid_device
         self.client = client_sock
         self.thread = threading.Thread(target=self.worker)
         self.close_callback = close_callback
@@ -55,6 +56,9 @@ class InterruptReceiver(Receiver):
                 logger.info("Invalid DATA msg: subtype != Output")
                 return
             logger.info("Output: %s", data)
+            if data[0] == 0x01:
+                # Report ID 0x01: keyboard
+                self.hid_device.keyboard.led(data[1])
 
 class BluetoothHID(object):
     def __init__(self, data_dir):
@@ -118,9 +122,10 @@ class BluetoothHID(object):
         self.interrupt_client, interrupt_client_info = self.interrupt_sock.accept()
         logging.info("Got interrupt client: %r", interrupt_client_info[0])
 
-        self.control_client_receiver = ControlReceiver(self.control_client, self.client_closed)
+        self.control_client_receiver = ControlReceiver(self, self.control_client,
+                                                       self.client_closed)
         self.control_client_receiver.start()
-        self.interrupt_client_receiver = InterruptReceiver(self.interrupt_client)
+        self.interrupt_client_receiver = InterruptReceiver(self, self.interrupt_client)
         self.interrupt_client_receiver.start()
 
     def close(self):

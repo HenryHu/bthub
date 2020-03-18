@@ -61,3 +61,6 @@ class BluetoothKeyboard(object):
         self.key_up(key)
         if modifier is not None:
             self.modifier_up(modifier)
+
+    def led(self, led):
+        logger.info("LED: %x", led)
