@@ -42,7 +42,7 @@ class BluetoothMouse(object):
     def wheel(self, dv=0, dh=0):
         dv = bound(dv, -127, 127)
         dh = bound(dh, -127, 127)
-        self.send_mouse_state(0, 0, dv, dh)
+        self.send_report(0, 0, dv, dh)
 
     def send_report(self, dx=0, dy=0, dv=0, dh=0):
         buttons = 0x0
