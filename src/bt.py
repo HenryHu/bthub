@@ -37,7 +37,7 @@ class App(object):
         self.console_thread.start()
 
     def console_handler(self):
-        self.hid_device.accept()
+        client = self.hid_device.accept()
         while True:
             user_input = input("bt > ")
             if ' ' in user_input:
@@ -48,26 +48,29 @@ class App(object):
 
             try:
                 if cmd == 'accept':
-                    self.hid_device.accept()
+                    if client is not None:
+                        logger.error("Already accepted")
+                    client = self.hid_device.accept()
                 if cmd == 'close':
-                    self.hid_device.close()
+                    client.close()
+                    client = None
                 if cmd == 'key':
                     if args is None:
                         logger.error("Arg missing")
                         continue
-                    self.hid_device.keyboard.key(None, int(args))
+                    client.keyboard.key(None, int(args))
                 if cmd == 'click':
-                    self.hid_device.mouse.click(int(args))
+                    client.mouse.click(int(args))
                 if cmd == 'move':
                     (arg1, arg2) = args.split(' ')
-                    self.hid_device.mouse.move(int(arg1), int(arg2))
+                    client.mouse.move(int(arg1), int(arg2))
                 if cmd == 'wheel':
                     if ' ' in args:
                         (arg1, arg2) = args.split(' ')
                     else:
                         arg1 = args
                         arg2 = 0
-                    self.hid_device.mouse.wheel(int(arg1), int(arg2))
+                    client.mouse.wheel(int(arg1), int(arg2))
                 if cmd == 'quit':
                     self.mainloop.quit()
                     sys.exit(0)

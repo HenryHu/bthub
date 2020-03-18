@@ -20,10 +20,11 @@ SDP_RECORD_FILENAME = "sdp_record.xml"
 HID_SERVICE_UUID = "00001124-0000-1000-8000-00805f9b34fb"
 
 class Receiver(object):
-    def __init__(self, hid_device, client_sock, close_callback=None):
-        self.hid_device = hid_device
+    def __init__(self, hid_client, client_sock, close_callback=None):
+        self.hid_client = hid_client
         self.client = client_sock
         self.thread = threading.Thread(target=self.worker)
+        self.thread.daemon = True
         self.close_callback = close_callback
 
     def start(self):
@@ -56,7 +57,7 @@ class InterruptReceiver(Receiver):
                 return
             if data[0] == 0x01:
                 # Report ID 0x01: keyboard
-                self.hid_device.keyboard.led(data[1])
+                self.hid_client.keyboard.led(data[1])
             else:
                 logger.info("Output: %s", data)
         else:
@@ -71,8 +72,6 @@ class BluetoothHID(object):
         self.control_client = None
         self.interrupt_client = None
         self.data_dir = data_dir
-        self.keyboard = bt_keyboard.BluetoothKeyboard(self)
-        self.mouse = bt_mouse.BluetoothMouse(self)
 
     def init(self):
         self.init_profile()
@@ -119,17 +118,27 @@ class BluetoothHID(object):
             logger.error("Already accepted")
             return
 
-        self.control_client, control_client_info = self.control_sock.accept()
+        control_client, control_client_info = self.control_sock.accept()
         logging.info("Got control client: %r", control_client_info[0])
 
-        self.interrupt_client, interrupt_client_info = self.interrupt_sock.accept()
+        interrupt_client, interrupt_client_info = self.interrupt_sock.accept()
         logging.info("Got interrupt client: %r", interrupt_client_info[0])
+
+        return BluetoothHIDClient(control_client, interrupt_client)
+
+class BluetoothHIDClient(object):
+    def __init__(self, control_client, interrupt_client):
+        self.control_client = control_client
+        self.interrupt_client = interrupt_client
 
         self.control_client_receiver = ControlReceiver(self, self.control_client,
                                                        self.client_closed)
         self.control_client_receiver.start()
         self.interrupt_client_receiver = InterruptReceiver(self, self.interrupt_client)
         self.interrupt_client_receiver.start()
+
+        self.keyboard = bt_keyboard.BluetoothKeyboard(self)
+        self.mouse = bt_mouse.BluetoothMouse(self)
 
     def close(self):
         if self.control_client:
@@ -149,7 +158,8 @@ class BluetoothHID(object):
 
     def send_interrupt_message(self, message):
         if not self.interrupt_client:
-            raise RuntimeError("Must accept connection first")
+            logger.error("Client closed")
+            return
 
         logger.info("Sending %r", message)
         self.interrupt_client.send(message)
