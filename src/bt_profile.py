@@ -6,15 +6,14 @@ import collections
 
 logger = logging.getLogger(__name__)
 
-class BluetoothKeyboardProfile(dbus.service.Object):
+class BluetoothHIDProfile(dbus.service.Object):
     """Details: https://github.com/pauloborges/bluez/blob/master/doc/profile-api.txt"""
 
     def __init__(self, bus, path, release_callback=None):
-        name = dbus.service.BusName("bthub.Keyboard", bus=bus)
-        super().__init__(name, path)
+        super().__init__(bus, path)
         self.release_callback = release_callback
         self.device_fd_map = collections.defaultdict(set)
-        logger.info("Registered keyboard profile at %s", path)
+        logger.info("Registered HID profile at %s", path)
 
     @dbus.service.method("org.bluez.Profile1", in_signature="", out_signature="")
     def Release(self):

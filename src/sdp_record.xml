@@ -66,11 +66,11 @@
     </attribute>
     <!-- Service name -->
     <attribute id="0x0100">
-        <text value="bthub Virtual Keyboard" />
+        <text value="bthub Virtual HID Service" />
     </attribute>
     <!-- Service description -->
     <attribute id="0x0101">
-        <text value="virtual bluetooth keyboard" />
+        <text value="virtual bluetooth HID device" />
     </attribute>
     <!-- Provider name -->
     <attribute id="0x0102">

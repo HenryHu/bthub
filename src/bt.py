@@ -2,7 +2,7 @@
 
 import dbus.mainloop.glib
 import threading
-import bt_keyboard
+import bt_hid
 import gi
 import logging
 import os
@@ -13,14 +13,14 @@ logger = logging.getLogger(__name__)
 
 class App(object):
     def __init__(self):
-        self.keyboard = None
+        self.hid_device = None
 
     def start(self):
         dbus.mainloop.glib.DBusGMainLoop(set_as_default=True)
 
-        self.keyboard = bt_keyboard.BluetoothKeyboard(sys.path[0])
-        self.keyboard.init()
-        self.keyboard.listen()
+        self.hid_device = bt_hid.BluetoothHID(sys.path[0])
+        self.hid_device.init()
+        self.hid_device.listen()
 
         self.start_console()
 
@@ -46,21 +46,22 @@ class App(object):
                 args = None
 
             if cmd == 'accept':
-                self.keyboard.accept()
+                self.hid_device.accept()
             if cmd == 'close':
-                self.keyboard.close()
-            if cmd == 'send':
+                self.hid_device.close()
+            if cmd == 'key':
                 if args is None:
                     logger.error("Arg missing")
                     continue
-                self.keyboard.send_key(0, int(args))
+                self.hid_device.keyboard.key(None, int(args))
             if cmd == 'click':
-                self.keyboard.send_mouse_click(int(args))
+                self.hid_device.mouse.click(int(args))
             if cmd == 'move':
                 (arg1, arg2) = args.split(' ')
-                self.keyboard.send_mouse_move(int(arg1), int(arg2))
+                self.hid_device.mouse.move(int(arg1), int(arg2))
             if cmd == 'wheel':
-                self.keyboard.send_wheel(int(args))
+                (arg1, arg2) = args.split(' ')
+                self.hid_device.mouse.wheel(int(args1), int(arg2))
             if cmd == 'quit':
                 self.mainloop.quit()
                 break
