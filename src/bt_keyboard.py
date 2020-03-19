@@ -39,10 +39,10 @@ class BluetoothKeyboard(object):
     def send_report(self):
         # 0xA1: 0xA0 = DATA 0x01 = Input
         # 0x01: HID report ID
-        modifier = 0x0
+        modifier_byte = 0x0
         for modifier in self.active_modifiers:
-            modifier |= 1 << modifier
-        message = bytearray([0xa1, 0x01, 0x00, modifier, 0x00,
+            modifier_byte |= 1 << modifier
+        message = bytearray([0xa1, 0x01, modifier_byte, 0x00,
                              0x00, 0x00, 0x00, 0x00, 0x00, 0x00])
         key_index = 5 # 5 ~ 10
         for key in self.active_keys:
