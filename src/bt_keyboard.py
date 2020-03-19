@@ -70,4 +70,4 @@ class BluetoothKeyboard(object):
             leds.append('CAPS')
         if led & 0x4:
             leds.append('SCROLL')
-        logger.info("LED: %x", ' '.join(leds))
+        logger.info("LED: %s", ' '.join(leds))
