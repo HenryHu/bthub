@@ -53,7 +53,7 @@ class Input(object):
         kbd_event = event.get_keyboard_event()
         if self.key_callback:
             self.key_callback(kbd_event.get_key(),
-                                kbd_event.get_key_state() == KeyState.PRESSED)
+                              kbd_event.get_key_state() == KeyState.PRESSED)
 
     def handle_pointer_motion(self, event):
         motion_event = event.get_pointer_event()

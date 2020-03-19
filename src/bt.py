@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 
-import dbus.mainloop.glib
 import threading
 import bt_hid
-import gi
 import logging
 import os
 import sys
+import dbus.mainloop.glib
+import gi
 from gi.repository import GLib
 
 logger = logging.getLogger(__name__)
