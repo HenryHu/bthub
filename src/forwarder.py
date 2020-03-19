@@ -189,6 +189,8 @@ BUTTON_CODES = {
     Button.BTN_MOUSE: 0,
     Button.BTN_RIGHT: 1,
     Button.BTN_MIDDLE: 2,
+    Button.BTN_SIDE: 3,
+    Button.BTN_EXTRA: 4,
 }
 
 def get_modifier_code(key):
@@ -241,7 +243,7 @@ class Forwarder(object):
             self.client.mouse.button_up(button_code)
 
     def mouse_wheel_callback(self, dv, dh):
-        self.client.mouse.wheel(int(dv), int(dh))
+        self.client.mouse.wheel(-int(dv / 5), -int(dh / 5))
 
     def run(self):
         self.hid_device.listen()
