@@ -229,7 +229,7 @@ class Forwarder(object):
                 self.ignore_keys.remove(key)
             return
         if has_switch_keys(self.active_keys):
-            logger.info("SWITCHING")
+            logger.info("Switching client")
             self.switch_client()
             self.ignore_keys.clear()
             self.ignore_keys.update(self.active_keys)
