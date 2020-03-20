@@ -202,6 +202,9 @@ def get_key_code(key):
 def get_button_code(button):
     return BUTTON_CODES.get(button, None)
 
+def has_switch_keys(active_keys):
+    return Key.KEY_RIGHTCTRL in active_keys and Key.KEY_PAUSE in active_keys
+
 class Forwarder(object):
     def __init__(self, data_path):
         dbus.mainloop.glib.DBusGMainLoop(set_as_default=True)
@@ -211,8 +214,29 @@ class Forwarder(object):
         self.input_device.register_callbacks(
             self.key_callback, self.mouse_move_callback,
             self.mouse_button_callback, self.mouse_wheel_callback)
+        self.clients = {}
+        self.client = None
+        self.active_keys = set()
+        self.ignore_keys = set()
 
     def key_callback(self, key, down):
+        if down:
+            self.active_keys.add(key)
+        else:
+            if key in self.active_keys: self.active_keys.remove(key)
+        if self.ignore_keys:
+            if key in self.ignore_keys:
+                self.ignore_keys.remove(key)
+            return
+        if has_switch_keys(self.active_keys):
+            logger.info("SWITCHING")
+            self.switch_client()
+            self.ignore_keys.clear()
+            self.ignore_keys.update(self.active_keys)
+            return
+        if self.client is None:
+            logger.warning("Discard event, not connected")
+            return
         modifier_code = get_modifier_code(key)
         if modifier_code is not None:
             if down:
@@ -230,9 +254,15 @@ class Forwarder(object):
                 self.client.keyboard.key_up(key_code)
 
     def mouse_move_callback(self, dx, dy):
+        if self.client is None:
+            logger.warning("Discard event, not connected")
+            return
         self.client.mouse.move(int(dx), int(dy))
 
     def mouse_button_callback(self, button, down):
+        if self.client is None:
+            logger.warning("Discard event, not connected")
+            return
         button_code = get_button_code(button)
         if button_code is None:
             logger.warning("Unknown button: %r", button)
@@ -243,11 +273,48 @@ class Forwarder(object):
             self.client.mouse.button_up(button_code)
 
     def mouse_wheel_callback(self, dv, dh):
+        if self.client is None:
+            logger.warning("Discard event, not connected")
+            return
         self.client.mouse.wheel(-int(dv / 5), -int(dh / 5))
+
+    def wait_client(self):
+        while True:
+            client = self.hid_device.accept(self.client_closed)
+            self.clients[client.get_remote_address()] = client
+            if self.client is None:
+                self.client = client
+
+    def client_closed(self, remote_address):
+        if remote_address in self.clients:
+            del self.clients[remote_address]
+            if self.client and self.client.get_remote_address() == remote_address:
+                self.client = None
+                self.switch_client()
+        else:
+            logger.error("Unknown client %s closed", remote_address)
+
+    def switch_client(self):
+        if not self.clients:
+            logger.warning("No client to switch to")
+            return
+        client_addresses = list(self.clients.keys())
+        if self.client is None:
+            client_index = -1
+        else:
+            self.client.keyboard.clear()
+            self.client.mouse.clear()
+            client_index = client_addresses.index(self.client.get_remote_address())
+        client_index = (client_index + 1) % len(client_addresses)
+        new_address = client_addresses[client_index]
+        logger.info("Switching to %s", new_address)
+        self.client = self.clients[new_address]
 
     def run(self):
         self.hid_device.listen()
-        self.client = self.hid_device.accept()
+        self.wait_client_thread = threading.Thread(target=self.wait_client)
+        self.wait_client_thread.daemon = True
+        self.wait_client_thread.start()
         self.forward_thread = threading.Thread(target=self.input_device.run)
         self.forward_thread.daemon = True
         self.forward_thread.start()

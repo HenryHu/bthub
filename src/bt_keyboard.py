@@ -71,3 +71,8 @@ class BluetoothKeyboard(object):
         if led & 0x4:
             leds.append('SCROLL')
         logger.info("LED: %s", ' '.join(leds))
+
+    def clear(self):
+        self.active_keys.clear()
+        self.active_modifiers.clear()
+        self.send_report()

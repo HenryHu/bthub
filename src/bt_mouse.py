@@ -44,6 +44,10 @@ class BluetoothMouse(object):
         dh = bound(dh, -127, 127)
         self.send_report(0, 0, dv, dh)
 
+    def clear(self):
+        self.active_buttons.clear()
+        self.send_report()
+
     def send_report(self, dx=0, dy=0, dv=0, dh=0):
         buttons = 0x0
         for button in self.active_buttons:

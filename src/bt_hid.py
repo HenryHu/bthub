@@ -111,7 +111,7 @@ class BluetoothHID(object):
         self.interrupt_sock.bind(("", PORT_INTERRUPT))
         self.interrupt_sock.listen(1)
 
-    def accept(self):
+    def accept(self, close_callback=None):
         logger.info("Accepting for connections")
 
         if self.control_client is not None:
@@ -119,17 +119,20 @@ class BluetoothHID(object):
             return
 
         control_client, control_client_info = self.control_sock.accept()
-        logging.info("Got control client: %r", control_client_info[0])
+        logger.info("Got control client: %r", control_client_info[0])
 
         interrupt_client, interrupt_client_info = self.interrupt_sock.accept()
-        logging.info("Got interrupt client: %r", interrupt_client_info[0])
+        logger.info("Got interrupt client: %r", interrupt_client_info[0])
 
-        return BluetoothHIDClient(control_client, interrupt_client)
+        return BluetoothHIDClient(control_client, interrupt_client,
+                                  control_client_info[0], close_callback)
 
 class BluetoothHIDClient(object):
-    def __init__(self, control_client, interrupt_client):
+    def __init__(self, control_client, interrupt_client, remote_address, close_callback):
         self.control_client = control_client
         self.interrupt_client = interrupt_client
+        self.remote_address = remote_address
+        self.close_callback = close_callback
 
         self.control_client_receiver = ControlReceiver(self, self.control_client,
                                                        self.client_closed)
@@ -139,6 +142,9 @@ class BluetoothHIDClient(object):
 
         self.keyboard = bt_keyboard.BluetoothKeyboard(self)
         self.mouse = bt_mouse.BluetoothMouse(self)
+
+    def get_remote_address(self):
+        return self.remote_address
 
     def close(self):
         if self.control_client:
@@ -152,6 +158,8 @@ class BluetoothHIDClient(object):
             self.interrupt_client = None
             self.interrupt_client_receiver.close()
             self.interrupt_client_receiver = None
+        if self.close_callback:
+            self.close_callback(self.remote_address)
 
     def client_closed(self):
         self.close()
