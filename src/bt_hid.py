@@ -169,5 +169,5 @@ class BluetoothHIDClient(object):
             logger.error("Client closed")
             return
 
-        logger.info("Sending %r", message)
+        logger.debug("Sending %r", message)
         self.interrupt_client.send(message)
