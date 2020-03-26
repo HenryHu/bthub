@@ -283,10 +283,11 @@ class Forwarder(object):
             self.client.mouse.button_up(button_code)
 
     def mouse_wheel_callback(self, dv, dh):
+        normalize = lambda x: 0 if x == 0 else -int(x/abs(x))
         if self.client is None:
             logger.warning("Discard event, not connected")
             return
-        self.client.mouse.wheel(-int(dv / 5), -int(dh / 5))
+        self.client.mouse.wheel(normalize(dv), normalize(dh))
 
     def wait_client(self):
         while True:
