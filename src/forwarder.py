@@ -163,14 +163,14 @@ KEY_CODES = {
     Key.KEY_ZENKAKUHANKAKU: 0x94,
     Key.KEY_KPLEFTPAREN: 0xb6,
     Key.KEY_KPRIGHTPAREN: 0xb7,
-    #Key.KEY_MEDIA_PLAYPAUSE: 0xe8,
-    #Key.KEY_MEDIA_STOPCD: 0xe9,
-    #Key.KEY_MEDIA_PREVIOUSSONG: 0xea,
-    #Key.KEY_MEDIA_NEXTSONG: 0xeb,
+}
+
+MEDIA_KEY_CODES = {
+    Key.KEY_PLAYPAUSE: 0xcd,
+    Key.KEY_STOPCD: 0xb7,
+    Key.KEY_PREVIOUSSONG: 0xb6,
+    Key.KEY_NEXTSONG: 0xb5,
     #Key.KEY_MEDIA_EJECTCD: 0xec,
-    #Key.KEY_MEDIA_VOLUMEUP: 0xed,
-    #Key.KEY_MEDIA_VOLUMEDOWN: 0xee,
-    #Key.KEY_MEDIA_MUTE: 0xef,
     #Key.KEY_MEDIA_WWW: 0xf0,
     #Key.KEY_MEDIA_BACK: 0xf1,
     #Key.KEY_MEDIA_FORWARD: 0xf2,
@@ -198,6 +198,9 @@ def get_modifier_code(key):
 
 def get_key_code(key):
     return KEY_CODES.get(key, None)
+
+def get_media_key_code(key):
+    return MEDIA_KEY_CODES.get(key, None)
 
 def get_button_code(button):
     return BUTTON_CODES.get(button, None)
@@ -243,15 +246,22 @@ class Forwarder(object):
                 self.client.keyboard.modifier_down(modifier_code)
             else:
                 self.client.keyboard.modifier_up(modifier_code)
-        else:
-            key_code = get_key_code(key)
-            if key_code is None:
-                logger.warning("Unknown key: %r", key)
-                return
+            return
+        key_code = get_key_code(key)
+        if key_code is not None:
             if down:
                 self.client.keyboard.key_down(key_code)
             else:
                 self.client.keyboard.key_up(key_code)
+            return
+        key_code = get_media_key_code(key)
+        if key_code is not None:
+            if down:
+                self.client.keyboard.media_key_down(key_code)
+            else:
+                self.client.keyboard.media_key_up(key_code)
+            return
+        logger.warning("Unknown key: %r", key)
 
     def mouse_move_callback(self, dx, dy):
         if self.client is None:
