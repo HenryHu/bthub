@@ -33,8 +33,11 @@ class Receiver(object):
 
     def worker(self):
         while True:
-            msg = self.client.recv(4096)
-            if not msg:
+            try:
+                msg = self.client.recv(4096)
+                if not msg: break
+            except bluetooth.btcommon.BluetoothError:
+                logger.info("Read error, connection broken")
                 break
             msg_type = msg[0]
             self.handler(msg_type, msg[1:])
