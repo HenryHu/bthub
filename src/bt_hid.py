@@ -75,34 +75,56 @@ class BluetoothHID(object):
         self.control_client = None
         self.interrupt_client = None
         self.data_dir = data_dir
+        self.registered = False
+        self.register_thread = None
+        self.service_record = None
 
     def init(self):
         self.init_profile()
-
-    def init_profile(self):
-        """Register a profile to bluez.
-        Details: https://github.com/pauloborges/bluez/blob/master/doc/profile-api.txt"""
-
-        logger.info("Init bluez profile")
-
-        options = {
-            "Name": "bthub Virtual HID device",
-            "ServiceRecord": self.get_service_record(),
-            "Role": "server",
-            "RequiredAuthentication": True,
-            "RequiredAuthorization": True,
-        }
-
-        bus = dbus.SystemBus()
-        profile = bt_profile.BluetoothHIDProfile(bus, HID_PROFILE_PATH)
-
-        bluez = bus.get_object("org.bluez", "/org/bluez")
-        profile_manager = dbus.Interface(bluez, "org.bluez.ProfileManager1")
-        profile_manager.RegisterProfile(HID_PROFILE_PATH, HID_SERVICE_UUID, options)
-        logger.info("Registered profile to bluez")
+        self.service_record = self.get_service_record()
+        self.register_thread = threading.Thread(target=self.register_worker)
+        self.register_thread.daemon = True
+        self.register_thread.start()
 
     def get_service_record(self):
         return open(os.path.join(self.data_dir, SDP_RECORD_FILENAME)).read()
+
+    def init_profile(self):
+        logger.info("Init HID profile")
+        bus = dbus.SystemBus()
+        profile = bt_profile.BluetoothHIDProfile(bus, HID_PROFILE_PATH, self.release_cb)
+
+    def release_cb(self):
+        self.registered = False
+
+    def register_profile(self):
+        """Register a profile to bluez.
+        Details: https://github.com/pauloborges/bluez/blob/master/doc/profile-api.txt"""
+        try:
+            logger.info("Register HID profile")
+            options = {
+                "Name": "bthub Virtual HID device",
+                "ServiceRecord": self.service_record,
+                "Role": "server",
+                "RequiredAuthentication": True,
+                "RequiredAuthorization": True,
+            }
+            bus = dbus.SystemBus()
+            bluez = bus.get_object("org.bluez", "/org/bluez")
+            profile_manager = dbus.Interface(bluez, "org.bluez.ProfileManager1")
+            profile_manager.RegisterProfile(HID_PROFILE_PATH, HID_SERVICE_UUID, options)
+            logger.info("Registered profile to bluez")
+            return True
+        except Exception as e:
+            logger.exception("Fail to register profile: %s", e)
+            return False
+
+    def register_worker(self):
+        while True:
+            if not self.registered:
+                if self.register_profile():
+                    self.registered = True
+            time.sleep(1)
 
     def listen(self):
         logger.info("Listening for connections")
